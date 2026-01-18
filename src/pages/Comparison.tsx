@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useRegion } from '@/contexts/RegionContext';
+import React from 'react';
+import { REGION_DATA } from '@/contexts/RegionContext';
 import { generateRegionComparisonData } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,22 +17,23 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const Comparison: React.FC = () => {
-  const { regionHierarchy } = useRegion();
-
-  const allCities: string[] = [];
-  Object.entries(regionHierarchy).forEach(([state, districts]) => {
-    Object.entries(districts).forEach(([district, cities]) => {
-      (cities as string[]).forEach((city: string) => {
-        allCities.push(`${city}, ${district}`);
+export default function Comparison() {
+  const allCities: string[] = React.useMemo(() => {
+    const cities: string[] = [];
+    Object.entries(REGION_DATA).forEach(([, districts]) => {
+      Object.entries(districts).forEach(([district, citiesList]) => {
+        citiesList.forEach((city) => {
+          cities.push(`${city}, ${district}`);
+        });
       });
     });
-  });
+    return cities;
+  }, []);
 
-  const [region1, setRegion1] = useState(allCities[0]);
-  const [region2, setRegion2] = useState(allCities[4]);
+  const [region1, setRegion1] = React.useState(allCities[0]);
+  const [region2, setRegion2] = React.useState(allCities[4]);
 
-  const comparisonData = useMemo(() => {
+  const comparisonData = React.useMemo(() => {
     const data1 = generateRegionComparisonData(region1);
     const data2 = generateRegionComparisonData(region2);
 
@@ -73,7 +74,6 @@ const Comparison: React.FC = () => {
         </p>
       </div>
 
-      {/* Region Selectors */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="glass-card border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
           <CardContent className="pt-6">
@@ -146,7 +146,6 @@ const Comparison: React.FC = () => {
         </Card>
       </div>
 
-      {/* Comparison Chart */}
       <Card className="glass-card border-border/50">
         <CardHeader>
           <CardTitle className="text-foreground">Demand Growth Comparison</CardTitle>
@@ -188,6 +187,4 @@ const Comparison: React.FC = () => {
       </Card>
     </div>
   );
-};
-
-export default Comparison;
+}

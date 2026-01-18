@@ -1,13 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Region } from '@/types';
 
-interface RegionContextType {
-  selectedRegion: Region;
-  setSelectedRegion: (region: Region) => void;
-  regionHierarchy: typeof regionHierarchy;
+export interface Region {
+  state: string;
+  district: string;
+  city: string;
 }
 
-const regionHierarchy = {
+export const REGION_DATA = {
   Maharashtra: {
     Pune: ['Haveli', 'Khed', 'Mulshi', 'Baramati'],
     Mumbai: ['Andheri', 'Borivali', 'Kurla', 'Dadar'],
@@ -28,9 +27,14 @@ const regionHierarchy = {
   },
 };
 
-const RegionContext = createContext<RegionContextType | undefined>(undefined);
+interface RegionContextType {
+  selectedRegion: Region;
+  setSelectedRegion: (region: Region) => void;
+}
 
-export const RegionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+const RegionContext = createContext<RegionContextType | null>(null);
+
+export function RegionProvider({ children }: { children: ReactNode }) {
   const [selectedRegion, setSelectedRegion] = useState<Region>({
     state: 'Maharashtra',
     district: 'Pune',
@@ -38,22 +42,16 @@ export const RegionProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   });
 
   return (
-    <RegionContext.Provider
-      value={{
-        selectedRegion,
-        setSelectedRegion,
-        regionHierarchy,
-      }}
-    >
+    <RegionContext.Provider value={{ selectedRegion, setSelectedRegion }}>
       {children}
     </RegionContext.Provider>
   );
-};
+}
 
-export const useRegion = () => {
+export function useRegion(): RegionContextType {
   const context = useContext(RegionContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useRegion must be used within a RegionProvider');
   }
   return context;
-};
+}

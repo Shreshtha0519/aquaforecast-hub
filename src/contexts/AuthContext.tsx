@@ -1,21 +1,33 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { User, UserRole } from '@/types';
 
-interface AuthContextType {
+export type UserRole = 'admin' | 'analyst' | 'viewer';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+}
+
+interface AuthState {
   user: User | null;
+  isAuthenticated: boolean;
+}
+
+interface AuthActions {
   login: (email: string, password: string, role: UserRole) => boolean;
   logout: () => void;
-  isAuthenticated: boolean;
   hasPermission: (requiredRole: UserRole[]) => boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+type AuthContextType = AuthState & AuthActions;
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   const login = (email: string, password: string, role: UserRole): boolean => {
-    // Simple mock authentication
     if (email && password.length >= 4) {
       setUser({
         id: crypto.randomUUID(),
@@ -28,34 +40,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return false;
   };
 
-  const logout = () => {
-    setUser(null);
-  };
+  const logout = () => setUser(null);
 
   const hasPermission = (requiredRoles: UserRole[]): boolean => {
-    if (!user) return false;
-    return requiredRoles.includes(user.role);
+    return user !== null && requiredRoles.includes(user.role);
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        isAuthenticated: !!user,
-        hasPermission,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  const value: AuthContextType = {
+    user,
+    isAuthenticated: user !== null,
+    login,
+    logout,
+    hasPermission,
+  };
 
-export const useAuth = () => {
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}

@@ -1,28 +1,40 @@
 import React from 'react';
-import { useRegion } from '@/contexts/RegionContext';
+import { useRegion, REGION_DATA } from '@/contexts/RegionContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { MapPin, Building2, Home } from 'lucide-react';
 
-const RegionSelector: React.FC = () => {
-  const { selectedRegion, setSelectedRegion, regionHierarchy } = useRegion();
+export default function RegionSelector() {
+  const { selectedRegion, setSelectedRegion } = useRegion();
 
-  const states = Object.keys(regionHierarchy);
-  const districts = selectedRegion.state 
-    ? Object.keys(regionHierarchy[selectedRegion.state as keyof typeof regionHierarchy] || {})
-    : [];
-  const cities = selectedRegion.state && selectedRegion.district
-    ? (regionHierarchy[selectedRegion.state as keyof typeof regionHierarchy] as any)?.[selectedRegion.district] || []
-    : [];
+  const states = Object.keys(REGION_DATA);
+  
+  const getDistricts = (state: string): string[] => {
+    const stateData = REGION_DATA[state as keyof typeof REGION_DATA];
+    return stateData ? Object.keys(stateData) : [];
+  };
+  
+  const getCities = (state: string, district: string): string[] => {
+    const stateData = REGION_DATA[state as keyof typeof REGION_DATA];
+    if (!stateData) return [];
+    const districtData = stateData[district as keyof typeof stateData];
+    return districtData ? [...districtData] : [];
+  };
+
+  const districts = getDistricts(selectedRegion.state);
+  const cities = getCities(selectedRegion.state, selectedRegion.district);
 
   const handleStateChange = (state: string) => {
-    const firstDistrict = Object.keys(regionHierarchy[state as keyof typeof regionHierarchy])[0];
-    const firstCity = (regionHierarchy[state as keyof typeof regionHierarchy] as any)[firstDistrict][0];
+    const newDistricts = getDistricts(state);
+    const firstDistrict = newDistricts[0] || '';
+    const newCities = getCities(state, firstDistrict);
+    const firstCity = newCities[0] || '';
     setSelectedRegion({ state, district: firstDistrict, city: firstCity });
   };
 
   const handleDistrictChange = (district: string) => {
-    const firstCity = (regionHierarchy[selectedRegion.state as keyof typeof regionHierarchy] as any)[district][0];
+    const newCities = getCities(selectedRegion.state, district);
+    const firstCity = newCities[0] || '';
     setSelectedRegion({ ...selectedRegion, district, city: firstCity });
   };
 
@@ -73,7 +85,7 @@ const RegionSelector: React.FC = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
-            {cities.map((city: string) => (
+            {cities.map((city) => (
               <SelectItem key={city} value={city}>{city}</SelectItem>
             ))}
           </SelectContent>
@@ -81,6 +93,4 @@ const RegionSelector: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default RegionSelector;
+}
