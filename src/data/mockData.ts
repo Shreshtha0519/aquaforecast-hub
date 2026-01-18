@@ -1,4 +1,26 @@
-import { ForecastData, SectorData, ActualVsPredicted, KPIData } from '@/types';
+export interface ForecastData {
+  month: string;
+  historical: number;
+  predicted: number;
+}
+
+export interface SectorData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface ActualVsPredicted {
+  actual: number;
+  predicted: number;
+}
+
+export interface KPIData {
+  demand: number;
+  supply: number;
+  efficiency: number;
+  riskLevel: 'safe' | 'warning' | 'critical';
+}
 
 export const generateForecastData = (months: number = 12): ForecastData[] => {
   const data: ForecastData[] = [];

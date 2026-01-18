@@ -22,7 +22,26 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 
-const Sidebar: React.FC = () => {
+type RoleType = 'admin' | 'analyst' | 'viewer';
+
+const navItems = [
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'analyst', 'viewer'] },
+  { path: '/prediction', icon: TrendingUp, label: 'Predictions', roles: ['admin', 'analyst', 'viewer'] },
+  { path: '/scenario', icon: Sliders, label: 'Simulations', roles: ['admin', 'analyst'] },
+  { path: '/data', icon: Upload, label: 'Data Upload', roles: ['admin', 'analyst'] },
+  { path: '/ask-ai', icon: MessageSquare, label: 'Ask AI', roles: ['admin', 'analyst', 'viewer'] },
+  { path: '/performance', icon: BarChart3, label: 'Model Performance', roles: ['admin'] },
+  { path: '/comparison', icon: GitCompare, label: 'Compare Regions', roles: ['admin', 'analyst', 'viewer'] },
+  { path: '/help', icon: HelpCircle, label: 'Help & Support', roles: ['admin', 'analyst', 'viewer'] },
+] as const;
+
+const roleConfig: Record<RoleType, { icon: typeof Shield; color: string; label: string }> = {
+  admin: { icon: Shield, color: 'bg-primary/20 text-primary', label: 'Admin' },
+  analyst: { icon: ChartLine, color: 'bg-success/20 text-success', label: 'Analyst' },
+  viewer: { icon: Eye, color: 'bg-warning/20 text-warning', label: 'Viewer' },
+};
+
+export default function Sidebar() {
   const { user, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
 
@@ -31,28 +50,10 @@ const Sidebar: React.FC = () => {
     navigate('/');
   };
 
-  const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'analyst', 'viewer'] },
-    { path: '/prediction', icon: TrendingUp, label: 'Predictions', roles: ['admin', 'analyst', 'viewer'] },
-    { path: '/scenario', icon: Sliders, label: 'Simulations', roles: ['admin', 'analyst'] },
-    { path: '/data', icon: Upload, label: 'Data Upload', roles: ['admin', 'analyst'] },
-    { path: '/ask-ai', icon: MessageSquare, label: 'Ask AI', roles: ['admin', 'analyst', 'viewer'] },
-    { path: '/performance', icon: BarChart3, label: 'Model Performance', roles: ['admin'] },
-    { path: '/comparison', icon: GitCompare, label: 'Compare Regions', roles: ['admin', 'analyst', 'viewer'] },
-    { path: '/help', icon: HelpCircle, label: 'Help & Support', roles: ['admin', 'analyst', 'viewer'] },
-  ];
-
-  const roleConfig = {
-    admin: { icon: Shield, color: 'bg-primary/20 text-primary', label: 'Admin' },
-    analyst: { icon: ChartLine, color: 'bg-success/20 text-success', label: 'Analyst' },
-    viewer: { icon: Eye, color: 'bg-warning/20 text-warning', label: 'Viewer' },
-  };
-
   const userRoleConfig = user ? roleConfig[user.role] : null;
 
   return (
     <aside className="w-64 min-h-screen sidebar-gradient border-r border-sidebar-border flex flex-col">
-      {/* Logo Section */}
       <div className="p-6">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-primary/20">
@@ -66,16 +67,12 @@ const Sidebar: React.FC = () => {
       </div>
 
       <Separator className="bg-sidebar-border" />
-
-      {/* Region Selector */}
       <RegionSelector />
-
       <Separator className="bg-sidebar-border" />
 
-      {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => {
-          const hasAccess = hasPermission(item.roles as any);
+          const hasAccess = hasPermission([...item.roles] as RoleType[]);
           if (!hasAccess) return null;
 
           return (
@@ -100,7 +97,6 @@ const Sidebar: React.FC = () => {
 
       <Separator className="bg-sidebar-border" />
 
-      {/* User Section */}
       <div className="p-4">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-full bg-sidebar-accent flex items-center justify-center">
@@ -130,6 +126,4 @@ const Sidebar: React.FC = () => {
       </div>
     </aside>
   );
-};
-
-export default Sidebar;
+}
