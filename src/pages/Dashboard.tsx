@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useRegion } from '@/contexts/RegionContext';
+import { useScenario } from '@/contexts/ScenarioContext';
 import { getKPIData, generateForecastData, sectorData } from '@/data/mockData';
 import KPICard from '@/components/KPICard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import {
 
 const Dashboard: React.FC = () => {
   const { selectedRegion } = useRegion();
+  const { dynamicRiskLevel, projectedDemand, currentStorage, demandStorageRatio } = useScenario();
   const regionKey = `${selectedRegion.state}-${selectedRegion.district}-${selectedRegion.city}`;
   
   const kpiData = useMemo(() => getKPIData(regionKey), [regionKey]);
@@ -38,6 +40,9 @@ const Dashboard: React.FC = () => {
     warning: '🟡',
     critical: '🔴',
   };
+
+  // Use dynamic risk level from scenario context
+  const currentRiskLevel = dynamicRiskLevel;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -69,10 +74,10 @@ const Dashboard: React.FC = () => {
         />
         <KPICard
           title="Risk Level"
-          value={`${riskEmoji[kpiData.riskLevel]} ${kpiData.riskLevel.charAt(0).toUpperCase() + kpiData.riskLevel.slice(1)}`}
-          subtitle="Current Assessment"
+          value={`${riskEmoji[currentRiskLevel]} ${currentRiskLevel.charAt(0).toUpperCase() + currentRiskLevel.slice(1)}`}
+          subtitle={`Demand/Storage: ${demandStorageRatio.toFixed(0)}%`}
           icon={AlertTriangle}
-          variant={riskVariant[kpiData.riskLevel]}
+          variant={riskVariant[currentRiskLevel]}
         />
       </div>
 
