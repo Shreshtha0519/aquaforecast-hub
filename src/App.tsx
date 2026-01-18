@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { RegionProvider } from "@/contexts/RegionContext";
+import { ScenarioProvider } from "@/contexts/ScenarioContext";
 
 import Login from "@/pages/Login";
 import MainLayout from "@/components/MainLayout";
@@ -65,13 +66,15 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RegionProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
+          <ScenarioProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </TooltipProvider>
+          </ScenarioProvider>
         </RegionProvider>
       </AuthProvider>
     </QueryClientProvider>

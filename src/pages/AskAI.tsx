@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRegion } from '@/contexts/RegionContext';
+import { useScenario } from '@/contexts/ScenarioContext';
 import { getKPIData } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,17 +14,19 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  hiddenContext?: string; // Hidden system context prepended to query
 }
 
 const AskAI: React.FC = () => {
   const { selectedRegion } = useRegion();
+  const { dynamicRiskLevel, projectedDemand, currentStorage, demandStorageRatio } = useScenario();
   const kpiData = getKPIData(`${selectedRegion.state}-${selectedRegion.district}-${selectedRegion.city}`);
   
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: `Hello! I'm your Water Demand AI Assistant. I have context about ${selectedRegion.city}, ${selectedRegion.district} (Risk Level: ${kpiData.riskLevel}). How can I help you analyze water demand patterns today?`,
+      content: `Hello! I'm your Water Demand AI Assistant. I have context about ${selectedRegion.city}, ${selectedRegion.district} (Risk Level: ${dynamicRiskLevel}). How can I help you analyze water demand patterns today?`,
       timestamp: new Date(),
     },
   ]);
@@ -37,14 +40,33 @@ const AskAI: React.FC = () => {
     }
   }, [messages]);
 
-  const generateMockResponse = (query: string): string => {
-    const context = `Based on ${selectedRegion.city} data (Risk: ${kpiData.riskLevel}, Efficiency: ${kpiData.efficiency}%):`;
+  // Build the hidden context instruction that gets prepended to every query
+  const buildHiddenContext = (): string => {
+    return `[SYSTEM CONTEXT - DO NOT DISPLAY TO USER]
+Current context: User is viewing ${selectedRegion.city}, ${selectedRegion.district}, ${selectedRegion.state}.
+Current Risk: ${dynamicRiskLevel.toUpperCase()}
+Demand/Storage Ratio: ${demandStorageRatio.toFixed(1)}%
+Projected Demand: ${projectedDemand} MLD
+Current Storage Capacity: ${currentStorage} MLD
+Base Demand: ${kpiData.demand} MLD
+Efficiency Score: ${kpiData.efficiency}%
+[END SYSTEM CONTEXT]
+
+User Query: `;
+  };
+
+  const generateMockResponse = (query: string, hiddenContext: string): string => {
+    const context = `Based on ${selectedRegion.city} data (Risk: ${dynamicRiskLevel}, Efficiency: ${kpiData.efficiency}%):`;
+    
+    // In a real implementation, hiddenContext + query would be sent to OpenRouter API
+    // The AI would receive: hiddenContext + query
+    // console.log('Full query sent to AI:', hiddenContext + query);
     
     const responses = [
-      `${context} The current demand-supply gap shows ${kpiData.demand - kpiData.supply} MLD deficit. Consider implementing water conservation measures during peak summer months.`,
-      `${context} Analysis suggests increasing storage capacity by 15% would improve resilience. The agricultural sector consumes 35% of total supply.`,
-      `${context} Historical patterns indicate demand peaks in April-May. I recommend pre-positioning resources and activating contingency plans by March.`,
-      `${context} The efficiency score of ${kpiData.efficiency}% indicates room for improvement. Pipe leakage detection could recover 8-12% of losses.`,
+      `${context} The current demand-supply gap shows ${kpiData.demand - kpiData.supply} MLD deficit. With a ${demandStorageRatio.toFixed(0)}% demand/storage ratio, consider implementing water conservation measures during peak summer months.`,
+      `${context} Analysis suggests increasing storage capacity by 15% would improve resilience. Current risk level is ${dynamicRiskLevel}. The agricultural sector consumes 35% of total supply.`,
+      `${context} Historical patterns indicate demand peaks in April-May. With projected demand at ${projectedDemand} MLD, I recommend pre-positioning resources and activating contingency plans by March.`,
+      `${context} The efficiency score of ${kpiData.efficiency}% indicates room for improvement. Current ${dynamicRiskLevel} risk status suggests ${dynamicRiskLevel === 'critical' ? 'immediate action is required' : dynamicRiskLevel === 'warning' ? 'monitoring is recommended' : 'the system is performing well'}.`,
     ];
     
     return responses[Math.floor(Math.random() * responses.length)];
@@ -53,11 +75,15 @@ const AskAI: React.FC = () => {
   const handleSend = async () => {
     if (!input.trim()) return;
 
+    // Build the hidden context that will be prepended to the user's query
+    const hiddenContext = buildHiddenContext();
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
       content: input,
       timestamp: new Date(),
+      hiddenContext: hiddenContext, // Store for reference (not displayed)
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -65,12 +91,13 @@ const AskAI: React.FC = () => {
     setIsLoading(true);
 
     // Simulate API delay
+    // In production: send (hiddenContext + input) to OpenRouter API
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     const assistantMessage: Message = {
       id: crypto.randomUUID(),
       role: 'assistant',
-      content: generateMockResponse(input),
+      content: generateMockResponse(input, hiddenContext),
       timestamp: new Date(),
     };
 
@@ -106,7 +133,7 @@ const AskAI: React.FC = () => {
             <div>
               <CardTitle className="text-foreground text-sm">AI Assistant</CardTitle>
               <p className="text-xs text-muted-foreground">
-                Context: {selectedRegion.city} | Risk: {kpiData.riskLevel}
+                Context: {selectedRegion.city} | Risk: {dynamicRiskLevel} | Ratio: {demandStorageRatio.toFixed(0)}%
               </p>
             </div>
           </div>

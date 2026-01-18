@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useRegion } from '@/contexts/RegionContext';
+import { useScenario } from '@/contexts/ScenarioContext';
 import { generateForecastData } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
@@ -20,10 +21,15 @@ import {
 
 const Scenario: React.FC = () => {
   const { selectedRegion } = useRegion();
+  const { scenario, setScenario, dynamicRiskLevel, demandStorageRatio } = useScenario();
   
-  const [populationGrowth, setPopulationGrowth] = useState(0);
-  const [rainfallDecrease, setRainfallDecrease] = useState(0);
-  const [industrialExpansion, setIndustrialExpansion] = useState(0);
+  const populationGrowth = scenario.populationGrowth;
+  const rainfallDecrease = scenario.rainfallDecrease;
+  const industrialExpansion = scenario.industrialExpansion;
+
+  const setPopulationGrowth = (v: number) => setScenario({ ...scenario, populationGrowth: v });
+  const setRainfallDecrease = (v: number) => setScenario({ ...scenario, rainfallDecrease: v });
+  const setIndustrialExpansion = (v: number) => setScenario({ ...scenario, industrialExpansion: v });
 
   const baseData = useMemo(() => generateForecastData(12), [selectedRegion]);
 
@@ -129,6 +135,27 @@ const Scenario: React.FC = () => {
 
             {/* Impact Summary */}
             <div className="pt-4 border-t border-border">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Dynamic Risk Level:</span>
+                <Badge
+                  variant="outline"
+                  className={
+                    dynamicRiskLevel === 'critical'
+                      ? 'bg-danger/10 text-danger border-danger/30'
+                      : dynamicRiskLevel === 'warning'
+                      ? 'bg-warning/10 text-warning border-warning/30'
+                      : 'bg-success/10 text-success border-success/30'
+                  }
+                >
+                  {dynamicRiskLevel === 'critical' ? '🔴' : dynamicRiskLevel === 'warning' ? '🟡' : '🟢'} {dynamicRiskLevel.charAt(0).toUpperCase() + dynamicRiskLevel.slice(1)}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Demand/Storage Ratio:</span>
+                <Badge variant="outline" className="font-mono">
+                  {demandStorageRatio.toFixed(1)}%
+                </Badge>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Projected Impact:</span>
                 <Badge
