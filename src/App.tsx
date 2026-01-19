@@ -7,7 +7,8 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { RegionProvider } from "@/contexts/RegionContext";
 import { ScenarioProvider } from "@/contexts/ScenarioContext";
 
-import Login from "@/pages/Login";
+import { AuthPage } from "@/components/ui/auth-page";
+import Signup from "@/pages/Signup";
 import MainLayout from "@/components/MainLayout";
 import Dashboard from "@/pages/Dashboard";
 import Prediction from "@/pages/Prediction";
@@ -38,7 +39,11 @@ function AppRoutes() {
     <Routes>
       <Route 
         path="/" 
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} 
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <AuthPage />} 
+      />
+      <Route 
+        path="/signup" 
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />} 
       />
       <Route
         element={
