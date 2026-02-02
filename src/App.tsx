@@ -18,6 +18,7 @@ import AskAI from "@/pages/AskAI";
 import Performance from "@/pages/Performance";
 import Comparison from "@/pages/Comparison";
 import Help from "@/pages/Help";
+import MLForecast from "@/pages/MLForecast";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ function AppRoutes() {
         <Route path="/scenario" element={<Scenario />} />
         <Route path="/data" element={<DataUpload />} />
         <Route path="/ask-ai" element={<AskAI />} />
+        <Route path="/ml-forecast" element={<MLForecast />} />
         <Route path="/performance" element={<Performance />} />
         <Route path="/comparison" element={<Comparison />} />
         <Route path="/help" element={<Help />} />

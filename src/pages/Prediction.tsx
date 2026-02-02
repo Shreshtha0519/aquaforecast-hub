@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useRegion } from '@/contexts/RegionContext';
-import { generateForecastData } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Calendar, Target } from 'lucide-react';
+import { TrendingUp, Calendar, Target, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   LineChart,
   Line,
@@ -19,12 +19,19 @@ import {
 } from 'recharts';
 
 const Prediction: React.FC = () => {
-  const { selectedRegion } = useRegion();
+  const { forecastData } = useRegion();
   const [forecastPeriod, setForecastPeriod] = useState<1 | 6 | 12>(6);
 
-  const forecastData = useMemo(() => {
-    return generateForecastData(forecastPeriod);
-  }, [forecastPeriod, selectedRegion]);
+  const forecastDataFiltered = useMemo(() => {
+    if (!forecastData) return [];
+    
+    // Filter based on selected period
+    return forecastData.forecast.slice(0, forecastPeriod).map((point, index) => ({
+      month: point.month,
+      predicted: point.demand_mld,
+      historical: index < 2 ? point.demand_mld * 0.95 : null,
+    }));
+  }, [forecastData, forecastPeriod]);
 
   const periodOptions = [
     { value: 1, label: '1 Month' },
@@ -32,15 +39,30 @@ const Prediction: React.FC = () => {
     { value: 12, label: '12 Months' },
   ];
 
-  const averagePredicted = Math.round(
-    forecastData.reduce((sum, d) => sum + d.predicted, 0) / forecastData.length
-  );
+  const averagePredicted = forecastDataFiltered.length > 0
+    ? Math.round(forecastDataFiltered.reduce((sum, d) => sum + d.predicted, 0) / forecastDataFiltered.length)
+    : 0;
 
-  const peakDemand = Math.max(...forecastData.map(d => d.predicted));
-  const minDemand = Math.min(...forecastData.map(d => d.predicted));
+  const peakDemand = forecastDataFiltered.length > 0
+    ? Math.max(...forecastDataFiltered.map(d => d.predicted))
+    : 0;
+
+  const minDemand = forecastDataFiltered.length > 0
+    ? Math.min(...forecastDataFiltered.map(d => d.predicted))
+    : 0;
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* No Data Warning */}
+      {!forecastData && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            No forecast data available. Please enter a country/region in the <strong>ML Forecast</strong> page first.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -49,31 +71,37 @@ const Prediction: React.FC = () => {
             Demand Predictions
           </h1>
           <p className="text-muted-foreground mt-1">
-            Forecast water demand for {selectedRegion.city}, {selectedRegion.district}
+            {forecastData 
+              ? `Forecast water demand for ${forecastData.region}` 
+              : 'Enter a region in ML Forecast page to see predictions'}
           </p>
         </div>
         
-        <div className="flex gap-2">
-          {periodOptions.map((option) => (
-            <Button
-              key={option.value}
-              variant={forecastPeriod === option.value ? 'default' : 'outline'}
-              onClick={() => setForecastPeriod(option.value as 1 | 6 | 12)}
-              className={
-                forecastPeriod === option.value
-                  ? 'bg-primary text-primary-foreground'
-                  : 'border-primary/30 text-primary hover:bg-primary/10'
-              }
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              {option.label}
-            </Button>
-          ))}
-        </div>
+        {forecastData && (
+          <div className="flex gap-2">
+            {periodOptions.map((option) => (
+              <Button
+                key={option.value}
+                variant={forecastPeriod === option.value ? 'default' : 'outline'}
+                onClick={() => setForecastPeriod(option.value as 1 | 6 | 12)}
+                className={
+                  forecastPeriod === option.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'border-primary/30 text-primary hover:bg-primary/10'
+                }
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {forecastData && (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="glass-card border-primary/20 bg-gradient-to-br from-primary/10 to-transparent">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -120,7 +148,7 @@ const Prediction: React.FC = () => {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={400}>
-            <AreaChart data={forecastData}>
+            <AreaChart data={forecastDataFiltered}>
               <defs>
                 <linearGradient id="predictGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.4}/>
@@ -159,6 +187,8 @@ const Prediction: React.FC = () => {
           </ResponsiveContainer>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 };

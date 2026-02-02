@@ -1,0 +1,24 @@
+# FastAPI and server dependencies
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+
+# ML and data processing
+scikit-learn==1.4.0
+numpy==1.26.3
+pandas==2.2.0
+
+# Optional: if using specific ML libraries
+# tensorflow==2.15.0
+# torch==2.1.2
+# xgboost==2.0.3
+
+# Caching (optional, for production)
+# redis==5.0.1
+
+# Monitoring and logging
+python-multipart==0.0.6
+python-json-logger==2.0.7
+
+# CORS and security
+python-cors==1.0.0

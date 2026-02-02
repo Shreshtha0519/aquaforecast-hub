@@ -6,6 +6,18 @@ export interface Region {
   city: string;
 }
 
+export interface ForecastData {
+  region: string;
+  model_version: string;
+  generated_at: string;
+  forecast: Array<{
+    month: string;
+    demand_mld: number;
+    confidence_lower?: number;
+    confidence_upper?: number;
+  }>;
+}
+
 export const REGION_DATA = {
   Maharashtra: {
     Pune: ['Haveli', 'Khed', 'Mulshi', 'Baramati'],
@@ -30,6 +42,8 @@ export const REGION_DATA = {
 interface RegionContextType {
   selectedRegion: Region;
   setSelectedRegion: (region: Region) => void;
+  forecastData: ForecastData | null;
+  setForecastData: (data: ForecastData | null) => void;
 }
 
 const RegionContext = createContext<RegionContextType | null>(null);
@@ -41,8 +55,10 @@ export function RegionProvider({ children }: { children: ReactNode }) {
     city: 'Haveli',
   });
 
+  const [forecastData, setForecastData] = useState<ForecastData | null>(null);
+
   return (
-    <RegionContext.Provider value={{ selectedRegion, setSelectedRegion }}>
+    <RegionContext.Provider value={{ selectedRegion, setSelectedRegion, forecastData, setForecastData }}>
       {children}
     </RegionContext.Provider>
   );
