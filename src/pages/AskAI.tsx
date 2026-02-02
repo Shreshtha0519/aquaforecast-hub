@@ -90,19 +90,67 @@ User Query: `;
     setInput('');
     setIsLoading(true);
 
-    // Simulate API delay
-    // In production: send (hiddenContext + input) to OpenRouter API
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Call OpenRouter API with hidden context + user query
+      const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+      
+      if (!apiKey) {
+        throw new Error('OpenRouter API key not found in environment variables');
+      }
 
-    const assistantMessage: Message = {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: generateMockResponse(input, hiddenContext),
-      timestamp: new Date(),
-    };
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'AquaForecast Hub',
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: hiddenContext,
+            },
+            {
+              role: 'user',
+              content: input,
+            },
+          ],
+        }),
+      });
 
-    setMessages((prev) => [...prev, assistantMessage]);
-    setIsLoading(false);
+      if (!response.ok) {
+        throw new Error(`OpenRouter API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const aiResponse = data.choices?.[0]?.message?.content || 'Unable to generate response.';
+
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: aiResponse,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error calling OpenRouter API:', error);
+      
+      // Fallback to mock response if API fails
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: generateMockResponse(input, hiddenContext) + '\n\n⚠️ Using fallback response (API error).',
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -220,7 +268,7 @@ User Query: `;
             </Button>
           </div>
           <p className="text-xs text-muted-foreground text-center mt-2">
-            AI responses are simulated. Connect OpenRouter API for live predictions.
+            AI-powered insights using OpenRouter API with regional context
           </p>
         </CardContent>
       </Card>

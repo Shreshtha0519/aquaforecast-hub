@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { useRegion } from './RegionContext';
-import { getKPIData } from '@/data/mockData';
 
 interface ScenarioState {
   populationGrowth: number;
@@ -8,9 +7,15 @@ interface ScenarioState {
   industrialExpansion: number;
 }
 
+export interface KPIDataInput {
+  demand: number;
+  supply: number;
+}
+
 interface ScenarioContextType {
   scenario: ScenarioState;
   setScenario: (scenario: ScenarioState) => void;
+  setRealKPIData: (data: KPIDataInput) => void;
   dynamicRiskLevel: 'safe' | 'warning' | 'critical';
   projectedDemand: number;
   currentStorage: number;
@@ -27,10 +32,15 @@ export function ScenarioProvider({ children }: { children: ReactNode }) {
     industrialExpansion: 0,
   });
 
-  const kpiData = useMemo(() => {
-    const regionKey = `${selectedRegion.state}-${selectedRegion.district}-${selectedRegion.city}`;
-    return getKPIData(regionKey);
-  }, [selectedRegion]);
+  // State for real KPI data from ML predictions
+  const [kpiData, setKPIData] = useState<KPIDataInput>({
+    demand: 0,
+    supply: 0,
+  });
+
+  const setRealKPIData = (data: KPIDataInput) => {
+    setKPIData(data);
+  };
 
   const { dynamicRiskLevel, projectedDemand, currentStorage, demandStorageRatio } = useMemo(() => {
     // Calculate scenario-adjusted demand
@@ -63,6 +73,7 @@ export function ScenarioProvider({ children }: { children: ReactNode }) {
       value={{
         scenario,
         setScenario,
+        setRealKPIData,
         dynamicRiskLevel,
         projectedDemand,
         currentStorage,

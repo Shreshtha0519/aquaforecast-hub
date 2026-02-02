@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import RegionSelector from './RegionSelector';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -17,6 +16,8 @@ import {
   Shield,
   Eye,
   ChartLine,
+  Brain,
+  MapPin,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -30,6 +31,7 @@ const navItems = [
   { path: '/scenario', icon: Sliders, label: 'Simulations', roles: ['admin', 'analyst'] },
   { path: '/data', icon: Upload, label: 'Data Upload', roles: ['admin', 'analyst'] },
   { path: '/ask-ai', icon: MessageSquare, label: 'Ask AI', roles: ['admin', 'analyst', 'viewer'] },
+  { path: '/ml-forecast', icon: Brain, label: 'ML Forecast', roles: ['admin', 'analyst', 'viewer'] },
   { path: '/performance', icon: BarChart3, label: 'Model Performance', roles: ['admin'] },
   { path: '/comparison', icon: GitCompare, label: 'Compare Regions', roles: ['admin', 'analyst', 'viewer'] },
   { path: '/help', icon: HelpCircle, label: 'Help & Support', roles: ['admin', 'analyst', 'viewer'] },
@@ -67,7 +69,17 @@ export default function Sidebar() {
       </div>
 
       <Separator className="bg-sidebar-border" />
-      <RegionSelector />
+      
+      {/* Location Info Note */}
+      <div className="px-4 py-3">
+        <div className="flex items-start gap-2 text-xs text-sidebar-foreground/60">
+          <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <p className="leading-relaxed">
+            Select your location from the Dashboard page to get region-specific insights
+          </p>
+        </div>
+      </div>
+      
       <Separator className="bg-sidebar-border" />
 
       <nav className="flex-1 p-4 space-y-1">
