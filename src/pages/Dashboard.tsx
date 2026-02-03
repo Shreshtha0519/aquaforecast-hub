@@ -80,9 +80,6 @@ const Dashboard: React.FC = () => {
       const efficiencyRatio = demand > 0 ? (supply / demand) : 1;
       const efficiency = Math.min(Math.round(efficiencyRatio * 100), 100);
       
-      // Update ScenarioContext with real data for Risk Level calculation
-      setRealKPIData({ demand, supply });
-      
       return {
         demand,
         supply,
@@ -95,7 +92,14 @@ const Dashboard: React.FC = () => {
       supply: 0,
       efficiency: 0,
     };
-  }, [mlForecast, setRealKPIData]);
+  }, [mlForecast]);
+
+  // Update ScenarioContext when kpiData changes
+  useEffect(() => {
+    if (kpiData.demand > 0 && kpiData.supply > 0) {
+      setRealKPIData({ demand: kpiData.demand, supply: kpiData.supply });
+    }
+  }, [kpiData.demand, kpiData.supply, setRealKPIData]);
 
   const forecastData = useMemo(() => {
     // If we have ML forecast, transform it to chart data

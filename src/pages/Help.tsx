@@ -11,15 +11,53 @@ const Help: React.FC = () => {
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const supportEmail = 'support@aquaforecast.com';
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const mailtoLink = `mailto:${supportEmail}?subject=${encodeURIComponent(
-      `[Support] ${subject}`
-    )}&body=${encodeURIComponent(`From: ${name} (${email})\n\n${message}`)}`;
-    window.location.href = mailtoLink;
+    setIsSending(true);
+    setSuccessMessage('');
+    setErrorMessage('');
+    
+    try {
+      // Send email using FormSubmit.co (free, no API key needed)
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('subject', `[AquaForecast Support] ${subject}`);
+      formData.append('message', message);
+      formData.append('_captcha', 'false'); // Disable captcha
+      formData.append('_template', 'table'); // Use table template
+      
+      const response = await fetch('https://formsubmit.co/ajax/shreshthabe519@gmail.com', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage('✓ Message sent successfully! We will get back to you soon.');
+        // Clear form
+        setName('');
+        setEmail('');
+        setSubject('');
+        setMessage('');
+        
+        // Clear success message after 5 seconds
+        setTimeout(() => setSuccessMessage(''), 5000);
+      } else {
+        throw new Error(data.message || 'Failed to send message');
+      }
+    } catch (error: any) {
+      console.error('Email error:', error);
+      setErrorMessage('Failed to send message. Please try emailing us directly at shreshthabe519@gmail.com');
+      setTimeout(() => setErrorMessage(''), 7000);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const faqItems = [
@@ -136,17 +174,33 @@ const Help: React.FC = () => {
                 />
               </div>
               
-              <Button type="submit" className="w-full bg-primary text-primary-foreground">
+              {successMessage && (
+                <div className="p-3 rounded-lg bg-success/10 border border-success/30 text-success text-sm">
+                  {successMessage}
+                </div>
+              )}
+              
+              {errorMessage && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+                  {errorMessage}
+                </div>
+              )}
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-primary text-primary-foreground"
+                disabled={isSending}
+              >
                 <Send className="w-4 h-4 mr-2" />
-                Send Message
+                {isSending ? 'Sending...' : 'Send Message'}
               </Button>
             </form>
 
             <div className="mt-6 pt-6 border-t border-border">
               <p className="text-sm text-muted-foreground text-center">
                 Or email us directly at{' '}
-                <a href={`mailto:${supportEmail}`} className="text-primary hover:underline">
-                  {supportEmail}
+                <a href="mailto:shreshthabe519@gmail.com" className="text-primary hover:underline font-medium">
+                  shreshthabe519@gmail.com
                 </a>
               </p>
             </div>

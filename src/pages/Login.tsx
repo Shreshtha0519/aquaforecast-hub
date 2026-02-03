@@ -1,46 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Droplets, Shield, BarChart3, Eye } from 'lucide-react';
+import { Droplets } from 'lucide-react';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [role, setRole] = React.useState<UserRole>('viewer');
-  const [error, setError] = React.useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+    setIsLoading(true);
+
     if (!email || !password) {
       setError('Please fill in all fields');
+      setIsLoading(false);
       return;
     }
+
+    const success = await login(email, password);
     
-    const success = login(email, password, role);
     if (success) {
       navigate('/dashboard');
     } else {
-      setError('Invalid credentials');
+      setError('Invalid email or password. Please try again.');
     }
-  };
-
-  const roleInfo = {
-    admin: { icon: Shield, label: 'Administrator', desc: 'Full system access' },
-    analyst: { icon: BarChart3, label: 'Analyst', desc: 'Simulations & predictions' },
-    viewer: { icon: Eye, label: 'Viewer', desc: 'View charts & reports' },
+    
+    setIsLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 ocean-gradient opacity-90" />
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
@@ -88,37 +85,21 @@ const Login: React.FC = () => {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-foreground">Role</Label>
-              <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-                <SelectTrigger className="bg-background/50 border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {Object.entries(roleInfo).map(([key, info]) => (
-                    <SelectItem key={key} value={key}>
-                      <div className="flex items-center gap-2">
-                        <info.icon className="w-4 h-4 text-primary" />
-                        <span>{info.label}</span>
-                        <span className="text-xs text-muted-foreground">- {info.desc}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
             {error && (
-              <p className="text-sm text-danger text-center">{error}</p>
+              <p className="text-sm text-danger text-center bg-destructive/10 p-2 rounded">{error}</p>
             )}
             
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6">
-              Sign In
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
           
           <p className="text-xs text-center text-muted-foreground mt-4">
-            Demo: Use any email and password (4+ chars)
+            Don't have an account? <a href="/signup" className="text-primary hover:underline">Sign up</a>
           </p>
         </CardContent>
       </Card>

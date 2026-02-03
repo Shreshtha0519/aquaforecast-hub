@@ -80,35 +80,40 @@ const Signup: React.FC = () => {
   const [role, setRole] = useState<UserRole>('viewer');
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     if (!email || !password || !firstName || !lastName) {
       setError('Please fill in all fields');
+      setIsLoading(false);
       return;
     }
 
     if (!acceptTerms) {
       setError('Please accept the terms and conditions');
+      setIsLoading(false);
       return;
     }
 
-    if (password.length < 4) {
-      setError('Password must be at least 4 characters');
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      setIsLoading(false);
       return;
     }
 
-    // For demo, use login to create account
-    const success = login(email, password, role);
+    const success = await signup(email, password, role);
     if (success) {
       navigate('/dashboard');
     } else {
-      setError('Failed to create account');
+      setError('Failed to create account. Email may already be in use.');
     }
+    setIsLoading(false);
   };
 
   const roleOptions = [
@@ -291,8 +296,9 @@ const Signup: React.FC = () => {
               type="submit"
               size="lg"
               className="w-full bg-gradient-to-r from-[#0EA5E9] to-[#0369A1] hover:from-[#0284C7] hover:to-[#0EA5E9] text-white font-semibold shadow-lg shadow-[#0EA5E9]/25 transition-all duration-300"
+              disabled={isLoading}
             >
-              Create Account
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
 
